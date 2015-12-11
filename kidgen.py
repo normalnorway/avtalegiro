@@ -10,7 +10,7 @@ i = member-no (5)       [Nets-Avtale: Kundenummer]
 v = custom (2)          [Nets-Avtale: Betalingstype]
 c = controll digit (1)
 
-Send tests to testgruppen@bbs.no
+Send tests to payment-test-no@nets.eu
 """
 
 customer_no_list = [15548, 15590, 14339, 9118, 14250, 15424, 14289, 15374, 15638, 15506]
