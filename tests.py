@@ -1,4 +1,10 @@
-# Stolen from Wikipedia. This is the canonical version.
+import unittest
+import operator
+import random
+from mod10 import mod10, digit_sum
+
+
+# Stolen from Wikipedia.
 def luhn_checksum(card_number):
     def digits_of(n):
         return [int(d) for d in str(n)]
@@ -16,22 +22,28 @@ def calculate_luhn(partial_card_number):
     return check_digit if check_digit == 0 else 10 - check_digit
 
 
-from mod10 import mod10
-import operator
-import random
 
-def random_number (max_digits=20):
-    """Returns random number between 1 and max_digits. All digit lengths
-    have equal probability."""
-    digits = str (random.randrange(10**max_digits, 10**(max_digits+1)))
-    return long (digits[:random.randint(1,max_digits)])
+class MyTestCase (unittest.TestCase):
+    NUM_TESTS = 100
 
-NUM_TESTS = 100
+    @classmethod
+    def rand (klass, max_digits=20):
+        """Returns random number between 1 and max_digits. All digit lengths
+        have equal probability."""
+        digits = str (random.randrange(10**max_digits, 10**(max_digits+1)))
+        return long (digits[:random.randint(1,max_digits)])
 
-lst = [random_number() for nil in xrange(NUM_TESTS)]
+    def test_mod10 (self):
+        lst = [self.rand() for nil in xrange(self.NUM_TESTS)]
+        self.assertListEqual (map(calculate_luhn, lst), map(mod10, lst))
 
-assert all (map (operator.eq, map(calculate_luhn, lst), map(mod10, lst)))
+    def test_digit_sum (self):
+        self.assertEqual (digit_sum (18), 9)
+        self.assertEqual (digit_sum (16), 7)
+        self.assertEqual (digit_sum (7992739871), 8)
+        self.assertEqual (digit_sum (111111111123), 6)
+        self.assertEqual (digit_sum (11111111111111111111), 2)
 
-#for nil in xrange (NUM_TESTS):
-#    num = random_number()
-#    assert calculate_luhn (num) == mod10 (num)
+
+if __name__ == '__main__':
+    unittest.main()
