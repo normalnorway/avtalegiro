@@ -13,19 +13,22 @@ OrderTransaction = namedtuple ('OrderTransaction',
 _CancelTrans = namedtuple ('_CancelTrans', ('due', 'amount', 'kid'))
 
 
-#def render_record (rec_def, fp, **kwargs): # better api?
-
 def render_record (rec_def, fp, data):
-#    from pprint import pprint
-#    pprint (data)
-#    return
     for field in rec_def[1:]:
         fp.write (field.render (data))
-#        fp.write (field.name + '\n')
-#        field.render (data)
-#        fp.write ('\n')
+
+def render_record_dbg (rec_def, fp, data):
+    #from pprint import pprint
+    #pprint (data)
+    #return
+    # @todo write record name
+    for field in rec_def[1:]:
+        print field.name
+        print field.render (data)
+#render_record = render_record_dbg
 
 
+# rename: clean_string
 def _to_string (s, maxlen):
     if s is None: return ''
     assert isinstance (s, basestring)
@@ -48,13 +51,13 @@ def line_iterator (text, max_width=80): # _line_iterator
 
 
 SpecRecord = namedtuple ('SpecRecord', ('line', 'column', 'text'))
-def _specification_record_iterator (text):
+def _specification_record_iterator (text):  # _generator?
     """Prepeare textual data for Avtalegiro's 2.2.4 Specification record.
     Every specification line is divided in two parts of 40 characters each.
     To position the specifications correctly, the payee must state which
     column and which line each specification record belongs to.
     Note: Empty specification records must not be transferred.
-    Returns tuples of (line-number, column-number, text)
+    Yields namedtuple of (line-number, column-number, text)
     """
     line_it = itertools.count(1)
     for line in line_iterator (text, max_width=80):
@@ -128,15 +131,15 @@ class PaymentClaim (object):
         self.transno = 1
         self.num_records = 0
 
-    def add (self, due_date, amount, kid, abbreviated_name=None,
+    def add (self, due, amount, kid, abbreviated_name=None,
              external_reference=None, specification=None):
         """Add one order line (amount posting 1&2 + specification record)"""
         # Add transaction (payment claim + specification)
 
-        # Convert and validate: due_date
-        if not isinstance (due_date, datetime.date):
-            due_date = datetime.datetime.strptime (due_date, '%d%m%y').date()
-        assert due_date > datetime.date.today()     # allow today?
+        # Convert and validate: due
+        if not isinstance (due, datetime.date):
+            due = datetime.datetime.strptime (due, '%d%m%y').date()
+        assert due > datetime.date.today()     # allow today?
 
         # Convert and validate: amount
         amount = long(amount)
@@ -151,8 +154,13 @@ class PaymentClaim (object):
         external_reference = _to_string (external_reference, 25)
         specification = _to_string (specification, 42*80)
 
+#        trans = OrderTransaction (due, amount, kid,
+#                    _to_string (abbreviated_name, 10),
+#                    _to_string (external_reference, 25),
+#                    _to_string (specification, 42*80))
+
         self.transactions.append (OrderTransaction (
-            due_date, amount, kid, abbreviated_name,
+            due, amount, kid, abbreviated_name,
             external_reference, specification))
 
     def render (self, fp):
@@ -201,7 +209,7 @@ class PaymentClaim (object):
             'KID': trans.kid,
         })
         self.num_records += 2
-        if not trans.spec: return
+        if not trans.spec: return  # @todo not needed
 
         for item in _specification_record_iterator (trans.spec):
             self.num_records += 1

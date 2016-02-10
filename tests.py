@@ -2,6 +2,42 @@ import unittest
 import operator
 import random
 from mod10 import mod10, digit_sum
+from avtalegiro import Transmission
+from avtalegiro import PaymentClaim, CancellationRequest
+
+
+class AvtaleGiroTestCase (unittest.TestCase):
+    def test_test1 (self):
+        trans = Transmission (data_sender='11223344',
+                              transmission_number='1234567')
+        order = PaymentClaim (order_account = 15035149098,
+                              order_number = 7654321)
+
+        # Note: All orders/transactions inside a PaymentClaim must
+        # be to the same customer!
+        order.add (due='200516', amount=250*100, kid='00010001')
+        order.add (due='270616', amount=300*100, kid='00010002',
+                   abbreviated_name = 'Abbr. name',
+                   external_reference = 'External reference',
+                   specification = 'Hello\nLine two\n\nLast line')
+        order.add (due='140316', amount=500*100, kid='00010003')
+
+        cancellation = CancellationRequest (account=15035149098, number=7654321)
+        cancellation.add ('200516', 250*100, '00010001')
+        cancellation.add ('140316', 500*100, '00010003')
+
+        trans.add (order)
+        trans.add (cancellation)
+
+        from io import BytesIO
+        buf = BytesIO()
+        trans.render (buf)
+        #with open('fixture/test1','wb') as fp: fp.write (buf.getvalue())
+
+        self.assertEqual (buf.getvalue(), open('fixture/test1').read())
+
+        # @todo test multiple orders per transmission
+
 
 
 # Stolen from Wikipedia.
