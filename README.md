@@ -22,21 +22,21 @@ som gjelder én avtale.
 
 ### Start record transmission
 
-DATAAVSENDER / DATA SENDER:
+DATAAVSENDER / DATA SENDER:  
 Fylles ut med dataavsenders KUNDEENHET-ID
 
-FORSENDELSESNUMMER / TRANSMISSION NUMBER (len=7):
+FORSENDELSESNUMMER / TRANSMISSION NUMBER (len=7):  
 Dataavsenders unike nummerering av forsendelser. (F.eks. DD MM (dag,
-måned) + løpenr. e.l.)).
+måned) + løpenr. e.l.)).  
 Forsendelsesnummer bør fremkomme i interne systemer/dokumenter.
 
 ### Start record payment claim order & cancelation request order
 
-OPPDRAGSNUMMER / ORDER NUMBER (len=7):
+OPPDRAGSNUMMER / ORDER NUMBER (len=7):  
 Må være unik nummerering av oppdrag pr. betalingsmottakers mottakeravtale 12
 måneder + en dag fram i tid. (f.eks. DD MM (dag, måned) + løpenummer e.l.).
 
 ### Amount posting
 
-TRANSAKSJONSNUMMER / TRANSACTION NUMBER (len=7):
+TRANSAKSJONSNUMMER / TRANSACTION NUMBER (len=7):  
 Unik nummerering av transaksjonen pr. oppdrag i stigende sekvens.

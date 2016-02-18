@@ -21,14 +21,14 @@ from mod10 import mod10
 
 # @todo assert range of memberno & donorno)
 
-def kid_member (memberno):
-    return generate_kid (memberno, payment_type = MEMBER)
+def member (memberno):
+    return _generate_kid (memberno, payment_type = MEMBER)
 
-def kid_donor (donorno):
-    return generate_kid (donorno, payment_type = DONOR)
+def donor (donorno):
+    return _generate_kid (donorno, payment_type = DONOR)
 
 # @todo make payment_type required? rename paytype?
-def generate_kid (memberno, payment_type=DONOR, fixed=15):
+def _generate_kid (memberno, payment_type=DONOR, fixed=15):
     assert fixed == 15    # can't change without notifying Nets?
     assert 0 <= payment_type < 100
     if not isinstance (memberno, basestring):
