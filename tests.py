@@ -35,7 +35,7 @@ class AvtaleGiroTestCase (unittest.TestCase):
         #with open('fixture/test1','wb') as fp: fp.write (buf.getvalue())
 
         self.assertEqual (buf.getvalue(), open('fixture/test1').read())
-
+        # @todo use debug renderer. then the diff is much nicer
         # @todo test multiple orders per transmission
 
 
