@@ -6,11 +6,29 @@ y = year (2)            [Must be fixed?]
 i = member-no (5)       [Nets-Avtale: Kundenummer]
 v = custom (2)          [Nets-Avtale: Betalingstype]
 c = controll digit (1)
+
+i: 00000 - 08999    donor no
+   09000 - 99999    member no
+
+v: 00 = medlemskontingent
+   01 = donasjon
 """
+
+MEMBER = 0
+DONOR = 1
 
 from mod10 import mod10
 
-def generate_kid (memberno, payment_type=1, fixed=15):
+# @todo assert range of memberno & donorno)
+
+def kid_member (memberno):
+    return generate_kid (memberno, payment_type = MEMBER)
+
+def kid_donor (donorno):
+    return generate_kid (donorno, payment_type = DONOR)
+
+# @todo make payment_type required? rename paytype?
+def generate_kid (memberno, payment_type=DONOR, fixed=15):
     assert fixed == 15    # can't change without notifying Nets?
     assert 0 <= payment_type < 100
     if not isinstance (memberno, basestring):

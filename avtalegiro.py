@@ -18,16 +18,13 @@ def render_record (rec_def, fp, data):
         fp.write (field.render (data))
 
 def render_record_dbg (rec_def, fp, data):
-    #from pprint import pprint
-    #pprint (data)
-    #return
-    # @todo write record name
+    print '\n#', rec_def[0]
     for field in rec_def[1:]:
-        print field.name
-        print field.render (data)
+        print field.name, ':', field.render (data)
 #render_record = render_record_dbg
 
 
+# @todo Maa ikke vaere mer enn 12 maaneder frem i tid
 def clean_due (due):
     """Convert and validate due date"""
     if not isinstance (due, datetime.date):
@@ -107,10 +104,15 @@ class Transmission (object):
         # @todo validate input
         self.data_sender = data_sender
         self.transmission_number = transmission_number
+        self.serial_generator = itertools.count (1)
         self.orders = []
+        #self.cancelations = []     # stored in self.orders
 
     def add (self, obj):    # obj is PaymentClaim or CancellationRequest
         self.orders.append (obj)
+
+    def next_serial (self):
+        return self.serial_generator.next()
 
     def render (self, fp):
         render_record (REC_START_RECORD_TRANSMISSION, fp, {
@@ -122,25 +124,27 @@ class Transmission (object):
         amount = 0
         first_date = datetime.date.max
         for order in self.orders:
-            order.render (fp)   # xxx must pass trans_no_base
+            order.render (fp, self.next_serial)
+            # q: better to let render() return num_records?
             rec_cnt += order.num_records
-            amount += sum(t.amount for t in order.transactions)
-            due = min(t.due for t in order.transactions)
+            amount += sum (t.amount for t in order.transactions)
+            due = min (t.due for t in order.transactions)
             if due < first_date: first_date = due
-        # update: don't need separate list, can use polymorphism
-        # update: might be better with separate list if due date and amount
-        #         from cancellations should be skipped
-#        for item in self.cancelations:
-#            item.render (fp)
+
+        # TOTAL AMOUNT: Should contain the sum of *all* transaction
+        # records in the transmission. (So also cancellation amount!)
 
         render_record (REC_END_RECORD_TRANSMISSION, fp, {
-            #'NUMBER OF TRANSACTIONS': len(self.orders) + len(self.cancelations),
             'NUMBER OF TRANSACTIONS': len(self.orders),
             'NUMBER OF RECORDS': rec_cnt + 2,  # include start & end record
             'TOTAL AMOUNT': amount,
             'FIRST DATE': first_date,
         })
 
+
+# @todo Transaction numbers only need to be unique per order. So no
+# need to pass from Transmission to PaymentClaim. Can generate in
+# PaymentClaim.add(), and not at render-time.
 
 
 # Note: All PaymentClaim must be to the same customer! To make claims
@@ -152,12 +156,12 @@ class PaymentClaim (object):
         self.order_account = clean_account (order_account)
         self.order_number = clean_serial (order_number)
         self.transactions = []
-        self.transno = 1
         self.num_records = 0
 
     def add (self, due, amount, kid, abbreviated_name=None,
              external_reference=None, specification=None):
         """Add one order line (amount posting 1&2 + specification record)"""
+        #due, amount, kid = clean_due(due), clean_amount(amount), clean_kid(kid)
         due = clean_due (due)
         amount = clean_amount (amount)
         kid = clean_kid (kid)
@@ -168,9 +172,8 @@ class PaymentClaim (object):
         self.transactions.append (trans)
 
 
-    def render (self, fp):
-        """
-        Renders one complete payment claim order:
+    def render (self, fp, next_serial):
+        """Renders one complete payment claim order:
         Start record payment claim order    {1}
           ----------------------------------------------+
           Amount posting 1                  {1}         |
@@ -185,40 +188,40 @@ class PaymentClaim (object):
         })
 
         for data in self.transactions:
-            self._render_transaction (fp, data)
-            self.transno += 1
+            self._render_transaction (fp, data, next_serial())
 
+        self.num_records += 2   # count start and end record
         render_record (REC_END_PAYMENT_CLAIM, fp, {
             'NUMBER OF TRANSACTIONS': len(self.transactions),
             'NUMBER OF RECORDS': self.num_records,
-            'TOTAL AMOUNT': sum(t.amount for t in self.transactions),
-            'FIRST DUE DATE': min(t.due for t in self.transactions),
-            'LAST DUE DATE': max(t.due for t in self.transactions),
+            'TOTAL AMOUNT': sum (t.amount for t in self.transactions),
+            'FIRST DUE DATE': min (t.due for t in self.transactions),
+            'LAST DUE DATE': max (t.due for t in self.transactions),
         })
-        self.num_records += 2
 
 
-    def _render_transaction (self, fp, trans):
+    def _render_transaction (self, fp, data, transno):
         render_record (REC_AMOUNT_POSTING_1, fp, {
             'TRANSACTION TYPE': '21',   # hardcoded (AvtalGiro info)
-            'TRANSACTION NUMBER': self.transno,
-            'DUE DATE': trans.due,
-            'AMOUNT': trans.amount,
-            'KID': trans.kid,
+            'TRANSACTION NUMBER': transno,
+            'DUE DATE': data.due,
+            'AMOUNT': data.amount,
+            'KID': data.kid,
         })
         render_record (REC_AMOUNT_POSTING_2, fp, {
             'TRANSACTION TYPE': '21',   # hardcoded (AvtalGiro info)
-            'TRANSACTION NUMBER': self.transno,
-            'ABBREVIATED NAME': trans.name,
-            'EXTERNAL REFERENCE': trans.ref,
-            'KID': trans.kid,
+            'TRANSACTION NUMBER': transno,
+            'ABBREVIATED NAME': data.name,
+            'EXTERNAL REFERENCE': data.ref,
+            'KID': data.kid,
         })
         self.num_records += 2
+        # q: better to return record_count instead?
 
-        for item in _specification_record_iterator (trans.spec):
+        for item in _specification_record_iterator (data.spec):
             self.num_records += 1
             render_record (REC_SPECIFICATION_RECORD, fp, {
-                'TRANSACTION NUMBER': self.transno,
+                'TRANSACTION NUMBER': transno,
                 'PLACEMENT/LINE': item.line,
                 'POSITION/COLUMN': item.column,
                 'MESSAGE SPECIFICATION': item.text,
@@ -239,7 +242,7 @@ class CancellationRequest (object):
         self.transactions.append (_CancelTrans (due, amount, kid))
 
 
-    def render (self, fp):
+    def render (self, fp, next_serial):
         render_record (REC_START_RECORD_CANCELLATION_REQUEST, fp, {
             'ORDER ACCOUNT': self.account,
             'ORDER NUMBER':  self.number,
@@ -248,7 +251,7 @@ class CancellationRequest (object):
         for trans in self.transactions:
             render_record (REC_CANCELLATION_POSTING_1, fp, {
                 'TRANSACTION TYPE': '21',
-                'TRANSACTION NUMBER': 666,  # @todo get from Transmission
+                'TRANSACTION NUMBER': next_serial(),
                 'DUE DATE': trans.due,
                 'AMOUNT': trans.amount,
                 'KID': trans.kid,

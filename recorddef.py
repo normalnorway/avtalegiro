@@ -4,7 +4,7 @@ from copy import deepcopy
 
 # 2.1 Start record transmission
 REC_START_RECORD_TRANSMISSION = (
-    None,
+    'START_RECORD_TRANSMISSION',
     FieldAlpha   (( 1, 2), always='NY',     name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=0,        name='SERVICE CODE'),
     FieldNumeric (( 5, 6), always=0,        name='TRANSMISSION TYPE'),
@@ -17,8 +17,8 @@ REC_START_RECORD_TRANSMISSION = (
 
 
 # 2.2.1 Start record payment claim order
-REC_START_PAYMENT_CLAIM = (
-    None,
+REC_START_PAYMENT_CLAIM = [
+    'START_PAYMENT_CLAIM',
     FieldAlpha   (( 1, 2), always='NY',     name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=21,       name='SERVICE CODE'),
     FieldNumeric (( 5, 6), always=0,        name='ORDER TYPE'),
@@ -27,12 +27,12 @@ REC_START_PAYMENT_CLAIM = (
     FieldNumeric ((18,24), key=True,        name='ORDER NUMBER'),
     FieldNumeric ((25,35), key=True,        name='ORDER ACCOUNT'),
     FieldNumeric ((36,80), filler=True,     name='FILLER'),
-)
+]
 
 
 # 2.2.2 Amount posting 1
-REC_AMOUNT_POSTING_1 = (
-    None,
+REC_AMOUNT_POSTING_1 = [
+    'AMOUNT_POSTING_1',
     FieldAlpha   (( 1, 2), always='NY',     name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=21,       name='SERVICE CODE'),
     FieldNumeric (( 5, 6), key=True,        name='TRANSACTION TYPE'),
@@ -46,27 +46,27 @@ REC_AMOUNT_POSTING_1 = (
     #FieldNumeric ((50,74), key=True,        name='KID'),
     FieldKid     ((50,74), key=True,        name='KID'),
     FieldNumeric ((75,80), filler=True,     name='FILLER'),
-)
+]
 
 
 # 2.2.3 Amount posting 2
-REC_AMOUNT_POSTING_2 = (
-    None,
+REC_AMOUNT_POSTING_2 = [
+    'AMOUNT_POSTING_2',
     FieldAlpha   (( 1, 2), always='NY',     name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=21,       name='SERVICE CODE'),
     FieldNumeric (( 5, 6), key=True,        name='TRANSACTION TYPE'),
-    FieldNumeric (( 7, 8), always=30,       name='RECORD TYPE'),
+    FieldNumeric (( 7, 8), always=31,       name='RECORD TYPE'),
     FieldNumeric (( 9,15), key=True,        name='TRANSACTION NUMBER'),
     FieldAlpha   ((16,25), key=True,        name='ABBREVIATED NAME'),
     FieldAlpha   ((26,50), filler=True,     name='FILLER'),
     FieldAlpha   ((51,75), key=True,        name='EXTERNAL REFERENCE'),
     FieldNumeric ((76,80), filler=True,     name='FILLER'),
-)
+]
 
 
 # 2.2.4 Specification record
 REC_SPECIFICATION_RECORD = (
-    None,
+    'SPECIFICATION_RECORD',
     FieldAlpha   (( 1, 2), always='NY',     name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=21,       name='SERVICE CODE'),
     FieldNumeric (( 5, 6), always=21,       name='TRANSACTION TYPE'),
@@ -82,8 +82,8 @@ REC_SPECIFICATION_RECORD = (
 
 
 # 2.2.5 End record payment claim order
-REC_END_PAYMENT_CLAIM = (
-    None,
+REC_END_PAYMENT_CLAIM = [
+    'END_PAYMENT_CLAIM',
     FieldAlpha   (( 1, 2), always='NY',     name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=21,       name='SERVICE CODE'),
     FieldNumeric (( 5, 6), always=0,        name='ORDER TYPE'),
@@ -94,33 +94,36 @@ REC_END_PAYMENT_CLAIM = (
     FieldNumeric ((42,47), key=True,        name='FIRST DUE DATE'),
     FieldNumeric ((48,53), key=True,        name='LAST DUE DATE'),
     FieldNumeric ((54,80), filler=True,     name='FILLER'),
-)
+]
 
 
 # 2.3.1 Start record cancellation request order
 REC_START_RECORD_CANCELLATION_REQUEST = deepcopy (REC_START_PAYMENT_CLAIM)
+REC_START_RECORD_CANCELLATION_REQUEST[0] = 'START_RECORD_CANCELLATION_REQUEST'
 REC_START_RECORD_CANCELLATION_REQUEST[3].always = 36
 
 
 # 2.3.3 Cancellation posting 1
 REC_CANCELLATION_POSTING_1 = deepcopy (REC_AMOUNT_POSTING_1)
+REC_CANCELLATION_POSTING_1[0] = 'CANCELLATION_POSTING_1'
 REC_CANCELLATION_POSTING_1[3].always = 93
 
 
 # 2.3.4 Cancellation posting 2
-# Note: This is never used
 REC_CANCELLATION_POSTING_2 = deepcopy (REC_AMOUNT_POSTING_2)
+REC_CANCELLATION_POSTING_2[0] = 'CANCELLATION_POSTING_2'
 REC_CANCELLATION_POSTING_2[3].always = 93
 
 
 # 2.3.5 End record cancellation request order
 REC_END_RECORD_CANCELLATION_REQUEST = deepcopy (REC_END_PAYMENT_CLAIM)
+REC_END_RECORD_CANCELLATION_REQUEST[0] = 'END_RECORD_CANCELLATION_REQUEST'
 REC_END_RECORD_CANCELLATION_REQUEST[3].always = 36
 
 
 # 2.4 End record transmission
 REC_END_RECORD_TRANSMISSION = (
-    None,
+    'END_RECORD_TRANSMISSION',
     FieldAlpha   (( 1, 2), always='NY', name='FORMAT CODE'),
     FieldNumeric (( 3, 4), always=0,    name='SERVICE CODE'),
     FieldNumeric (( 5, 6), always=0,    name='TRANSMISSION TYPE'),
@@ -131,6 +134,3 @@ REC_END_RECORD_TRANSMISSION = (
     FieldNumeric ((42,47), key=True,    name='FIRST DATE'),
     FieldNumeric ((48,80), filler=True, name='FILLER'),
 )
-
-
-#__all__ = [key for key in globals() if key.startswith('REC_')]
